@@ -2,7 +2,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.awt.Color;
+
 
 public class ImageToGrayscale {
 
@@ -12,7 +12,12 @@ public class ImageToGrayscale {
 
         try {
             BufferedImage image = ImageIO.read(inputFile);
-            convertToGrayscale(image);
+            long startTime=System.currentTimeMillis();
+            convertToGrayscale(image,4);
+            long endTime=System.currentTimeMillis();
+            long elapsedTime=endTime-startTime;
+            System.out.println("Time: "+elapsedTime+" miliseconds");
+
 
             ImageIO.write(image, "png", outputFile);
         } catch (IOException e) {
@@ -28,23 +33,22 @@ public class ImageToGrayscale {
     // }
 
 
-    private static void convertToGrayscale(BufferedImage image) {
-        for (int y = 0; y < image.getHeight(); y++) {
-            for (int x = 0; x < image.getWidth(); x++) {
-                int rgb = image.getRGB(x, y);
-                Color color = new Color(rgb, true);
-    
-                int red = color.getRed();
-                int green = color.getGreen();
-                int blue = color.getBlue();
-                
-                // Compute the average of red, green, and blue (simple grayscale)
-                int gray = (red + green + blue) / 3;
-                
-                // Create new grayscale color
-                Color grayColor = new Color(gray, gray, gray, color.getAlpha());
-                image.setRGB(x, y, grayColor.getRGB());
+    private static void convertToGrayscale(BufferedImage image,int numberOfThreads) {
+        int threadHight=image.getHeight()/numberOfThreads;
+        ImageToGrayscaleThread[]threads=new ImageToGrayscaleThread[numberOfThreads];
+        for (int i=0;i<numberOfThreads;i++){
+            int startY=i*threadHight;
+            int endY=startY+threadHight;
+            threads[i]=new ImageToGrayscaleThread(image, startY, endY);
+            threads[i].start();
+            try {
+                threads[i].join();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
         }
+        
+       
     }
 }
